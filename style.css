@@ -1,5 +1,6 @@
 body {
     margin: 40px;
+    place-items: center;
 }
 
 .wrapper{
