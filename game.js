@@ -1,6 +1,6 @@
 document.addEventListener("DOMContentLoaded", () => {
     let selectedPiece = null;
-    let currentTurn = "white";
+    let currentTurn = "blanco";
     const turnDisplay = document.querySelector("h2");
 
     function isPathClear(fromIndex, toIndex, step) {
@@ -24,8 +24,8 @@ document.addEventListener("DOMContentLoaded", () => {
 
         switch (pieceType) {
             case "pawn":
-                const direction = piece.alt.includes("white") ? -1 : 1;
-                const startRow = piece.alt.includes("white") ? 6 : 1;
+                const direction = piece.alt.includes("blanco") ? -1 : 1;
+                const startRow = piece.alt.includes("blanco") ? 6 : 1;
                 if (colDiff === 0 && rowDiff === direction && !toCell.firstChild) return true;
                 if (colDiff === 0 && rowDiff === 2 * direction && Math.floor(fromIndex / 8) === startRow && !toCell.firstChild) return true;
                 if (absColDiff === 1 && rowDiff === direction && toCell.firstChild) return true;
@@ -62,7 +62,7 @@ document.addEventListener("DOMContentLoaded", () => {
     function checkmate() {
         const kings = document.querySelectorAll("img[alt*='king']");
         if (kings.length < 2) {
-            const winner = kings[0].alt.includes("white") ? "Blancas" : "Negras";
+            const winner = kings[0].alt.includes("blanco") ? "Blancas" : "Negras";
             alert(`${winner} ganan por jaque mate!`);
             location.reload();
         }
@@ -71,8 +71,8 @@ document.addEventListener("DOMContentLoaded", () => {
     document.querySelectorAll(".item img").forEach(piece => {
         piece.draggable = true;
         piece.addEventListener("dragstart", (e) => {
-            if ((currentTurn === "white" && piece.alt.includes("white")) || 
-                (currentTurn === "black" && piece.alt.includes("black"))) {
+            if ((currentTurn === "blanco" && piece.alt.includes("blanco")) || 
+                (currentTurn === "negro" && piece.alt.includes("negro"))) {
                 selectedPiece = piece;
                 e.dataTransfer.setData("text", "");
             } else {
@@ -99,8 +99,8 @@ document.addEventListener("DOMContentLoaded", () => {
                         previousParent.appendChild(selectedPiece);
                         return;
                     }
-                    currentTurn = currentTurn === "white" ? "black" : "white";
-                    turnDisplay.textContent = `Es turno del: ${currentTurn}`;
+                    currentTurn = currentTurn === "blanco" ? "negro" : "blanco";
+                    turnDisplay.textContent = `Turno actual: ${currentTurn}`;
                     checkmate();
                 }
             }
