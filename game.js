@@ -1,6 +1,7 @@
 document.addEventListener("DOMContentLoaded", () => {
     let selectedPiece = null;
-    let currentTurn = "blanco";
+    let currentTurn = "white";
+    let enPassantTarget = null;
     const turnDisplay = document.querySelector("h2");
 
     function isPathClear(fromIndex, toIndex, step) {
@@ -24,11 +25,18 @@ document.addEventListener("DOMContentLoaded", () => {
 
         switch (pieceType) {
             case "pawn":
-                const direction = piece.alt.includes("blanco") ? -1 : 1;
-                const startRow = piece.alt.includes("blanco") ? 6 : 1;
+                const direction = piece.alt.includes("white") ? -1 : 1;
+                const startRow = piece.alt.includes("white") ? 6 : 1;
                 if (colDiff === 0 && rowDiff === direction && !toCell.firstChild) return true;
-                if (colDiff === 0 && rowDiff === 2 * direction && Math.floor(fromIndex / 8) === startRow && !toCell.firstChild) return true;
+                if (colDiff === 0 && rowDiff === 2 * direction && Math.floor(fromIndex / 8) === startRow && !toCell.firstChild) {
+                    enPassantTarget = toCell;
+                    return true;
+                }
                 if (absColDiff === 1 && rowDiff === direction && toCell.firstChild) return true;
+                if (enPassantTarget && enPassantTarget === toCell && absColDiff === 1 && rowDiff === direction) {
+                    enPassantTarget.parentElement.innerHTML = "";
+                    return true;
+                }
                 break;
             case "rook":
                 if ((colDiff === 0 && isPathClear(fromIndex, toIndex, rowDiff > 0 ? 8 : -8)) ||
@@ -62,7 +70,7 @@ document.addEventListener("DOMContentLoaded", () => {
     function checkmate() {
         const kings = document.querySelectorAll("img[alt*='king']");
         if (kings.length < 2) {
-            const winner = kings[0].alt.includes("blanco") ? "Blancas" : "Negras";
+            const winner = kings[0].alt.includes("white") ? "Blancas" : "Negras";
             alert(`${winner} ganan por jaque mate!`);
             location.reload();
         }
@@ -71,8 +79,8 @@ document.addEventListener("DOMContentLoaded", () => {
     document.querySelectorAll(".item img").forEach(piece => {
         piece.draggable = true;
         piece.addEventListener("dragstart", (e) => {
-            if ((currentTurn === "blanco" && piece.alt.includes("blanco")) || 
-                (currentTurn === "negro" && piece.alt.includes("negro"))) {
+            if ((currentTurn === "white" && piece.alt.includes("white")) || 
+                (currentTurn === "black" && piece.alt.includes("black"))) {
                 selectedPiece = piece;
                 e.dataTransfer.setData("text", "");
             } else {
@@ -99,11 +107,20 @@ document.addEventListener("DOMContentLoaded", () => {
                         previousParent.appendChild(selectedPiece);
                         return;
                     }
-                    currentTurn = currentTurn === "blanco" ? "negro" : "blanco";
-                    turnDisplay.textContent = `Turno actual: ${currentTurn}`;
+                    if (selectedPiece.alt.includes("pawn") && (Math.floor(Array.from(cell.parentNode.children).indexOf(cell) / 8) === 0 ||
+                        Math.floor(Array.from(cell.parentNode.children).indexOf(cell) / 8) === 7)) {
+                        let newPiece = "queen";
+                        while (!["queen", "rook", "bishop", "horse"].includes(newPiece)) {
+                            newPiece = prompt("Promoción de peón: elige reina, torre, alfil o caballo").toLowerCase();
+                        }
+                        selectedPiece.alt = `${currentTurn}-${newPiece}`;
+                    }
+                    currentTurn = currentTurn === "white" ? "black" : "white";
+                    turnDisplay.textContent = `Es turno del: ${currentTurn}`;
                     checkmate();
                 }
             }
         });
     });
 });
+
