@@ -4,16 +4,35 @@ document.addEventListener("DOMContentLoaded", () => {
     let enPassantTarget = null;
     const turnDisplay = document.querySelector("h2");
 
+    /**
+     * 
+     * @param {*} fromIndex 
+     * @param {*} toIndex 
+     * @param {*} step 
+     * @returns 
+     */
     function isPathClear(fromIndex, toIndex, step) {
         const cells = document.querySelectorAll(".item");
-        let i = fromIndex + step;
+        let i = fromIndex;
         while (i !== toIndex) {
-            if (cells[i].firstChild) return false;
             i += step;
+            const cellElement = cells[i].firstElementChild
+            const cellHasPiece = !!cellElement
+            if (i === toIndex && cellHasPiece) {
+                return cellElement.alt.includes(currentTurn === "white" ? "black" : "white");
+            }
+            if (cellHasPiece) return false;
         }
         return true;
     }
 
+    /**
+     * Función que valida si el movimiento de una pieza es válido
+     * @param {*} piece html de la pieza que se mueve
+     * @param {*} fromCell casilla inicial del array de html de 64 casillas
+     * @param {*} toCell casilla final del array de html de 64 casillas
+     * @returns verdadero si el movimiento es válido. Falso si no se puede hacer
+     */
     function isValidMove(piece, fromCell, toCell) {
         const pieceType = piece.alt.split("-")[1];
         const fromIndex = Array.from(fromCell.parentNode.children).indexOf(fromCell);
@@ -22,19 +41,28 @@ document.addEventListener("DOMContentLoaded", () => {
         const colDiff = (toIndex % 8) - (fromIndex % 8);
         const absRowDiff = Math.abs(rowDiff);
         const absColDiff = Math.abs(colDiff);
+        const isGoingDown = rowDiff > 0;
+        const isGoingRight = colDiff > 0;
 
         switch (pieceType) {
             case "pawn":
                 const direction = piece.alt.includes("white") ? -1 : 1;
                 const startRow = piece.alt.includes("white") ? 6 : 1;
-                if (colDiff === 0 && rowDiff === direction && !toCell.firstChild) return true;
-                if (colDiff === 0 && rowDiff === 2 * direction && Math.floor(fromIndex / 8) === startRow && !toCell.firstChild) {
+                const toCellHasPiece = !!toCell.firstChild;
+                if (colDiff === 0 && rowDiff === direction && !toCellHasPiece) return true;
+                const isPawnAtStartRow = Math.floor(fromIndex / 8) === startRow
+                if (colDiff === 0 && rowDiff === 2 * direction && isPawnAtStartRow && !toCellHasPiece) {
                     enPassantTarget = toCell;
                     return true;
                 }
-                if (absColDiff === 1 && rowDiff === direction && toCell.firstChild) return true;
-                if (enPassantTarget && enPassantTarget === toCell && absColDiff === 1 && rowDiff === direction) {
-                    enPassantTarget.parentElement.innerHTML = "";
+
+                const isPawnEating = absColDiff === 1 && rowDiff === direction
+                if (isPawnEating && toCellHasPiece) return true;
+                const existsEnPassant = !!enPassantTarget
+                const indexOfEnPassantTarget = Array.from(toCell.parentNode.children).indexOf(enPassantTarget)
+                const canMovingPieceEatEnPassant = Math.abs(indexOfEnPassantTarget - fromIndex) === 1
+                if (existsEnPassant && canMovingPieceEatEnPassant && isPawnEating) {
+                    enPassantTarget.innerHTML = "";
                     return true;
                 }
                 break;
@@ -46,12 +74,20 @@ document.addEventListener("DOMContentLoaded", () => {
                 if ((absColDiff === 2 && absRowDiff === 1) || (absColDiff === 1 && absRowDiff === 2)) return true;
                 break;
             case "bishop":
-                if (absRowDiff === absColDiff && isPathClear(fromIndex, toIndex, (rowDiff > 0 ? 8 : -8) + (colDiff > 0 ? 1 : -1))) return true;
+                const step = getDiagonalStep(isGoingDown, isGoingRight);
+                if (absRowDiff === absColDiff && isPathClear(fromIndex, toIndex, step)) return true;
                 break;
             case "queen":
-                if ((absRowDiff === absColDiff && isPathClear(fromIndex, toIndex, (rowDiff > 0 ? 8 : -8) + (colDiff > 0 ? 1 : -1))) ||
-                    (colDiff === 0 && isPathClear(fromIndex, toIndex, rowDiff > 0 ? 8 : -8)) ||
-                    (rowDiff === 0 && isPathClear(fromIndex, toIndex, colDiff > 0 ? 1 : -1))) return true;
+                const isDiagonalMove = absRowDiff === absColDiff
+                const isVerticalMove = colDiff === 0
+                const isHorizontalMove = rowDiff === 0
+
+                const diagonalStep = getDiagonalStep(isGoingDown, isGoingRight);
+                const verticalStep = getVerticalStep(isGoingDown);
+                const horizontalStep = getHorizontalStep(isGoingRight);
+                if ((isDiagonalMove && isPathClear(fromIndex, toIndex, diagonalStep)) ||
+                    (isVerticalMove && isPathClear(fromIndex, toIndex, verticalStep)) ||
+                    (isHorizontalMove && isPathClear(fromIndex, toIndex, horizontalStep))) return true;
                 break;
             case "king":
                 if (absRowDiff <= 1 && absColDiff <= 1) return true;
@@ -60,11 +96,23 @@ document.addEventListener("DOMContentLoaded", () => {
         return false;
     }
 
+    function getDiagonalStep(isGoingDown, isGoingRight) {
+        return (isGoingDown ? 8 : -8) + (isGoingRight ? 1 : -1)
+    }
+
+    function getVerticalStep(isGoingDown) {
+        return isGoingDown ? 8 : -8
+    }
+
+    function getHorizontalStep(isGoingRight) {
+        return isGoingRight ? 1 : -1
+    }
+
     function isKingInCheck(color) {
-        const king = document.querySelector(`img[alt='${color}-king']`).parentElement;
+        const kingPosition = document.querySelector(`img[alt='${color}-king']`).parentElement;
         return Array.from(document.querySelectorAll(".item img"))
             .filter(img => !img.alt.includes(color))
-            .some(enemy => isValidMove(enemy, enemy.parentElement, king));
+            .some(enemy => isValidMove(enemy, enemy.parentElement, kingPosition));
     }
 
     function checkmate() {
@@ -79,7 +127,7 @@ document.addEventListener("DOMContentLoaded", () => {
     document.querySelectorAll(".item img").forEach(piece => {
         piece.draggable = true;
         piece.addEventListener("dragstart", (e) => {
-            if ((currentTurn === "white" && piece.alt.includes("white")) || 
+            if ((currentTurn === "white" && piece.alt.includes("white")) ||
                 (currentTurn === "black" && piece.alt.includes("black"))) {
                 selectedPiece = piece;
                 e.dataTransfer.setData("text", "");
