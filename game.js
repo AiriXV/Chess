@@ -71,6 +71,8 @@ document.addEventListener("DOMContentLoaded", () => {
                     (rowDiff === 0 && isPathClear(fromIndex, toIndex, colDiff > 0 ? 1 : -1))) return true;
                 break;
             case "horse":
+                // Caballo puede moverse en forma de L
+                // funcionQueNoCumpleSuCometidoParaQueElCaballoNoComaPiezasDeSuColor()
                 if ((absColDiff === 2 && absRowDiff === 1) || (absColDiff === 1 && absRowDiff === 2)) return true;
                 break;
             case "bishop":
