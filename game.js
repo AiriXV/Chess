@@ -14,11 +14,36 @@ document.addEventListener("DOMContentLoaded", () => {
         return true;
     }
 
+    function getFirstImgChild(cell) {
+        for (let child of cell.children) {
+            console.log(1, child.tagName)
+            if (child.tagName.toLowerCase() === "img") {
+                return child;
+            }
+        }
+        return null
+    }
+
+    function isEatingOwnPiece(piece, toCell) {
+        const clonedPiece = piece.cloneNode(true);
+        const clonedToCell = toCell.cloneNode(true);
+        const toPiece = getFirstImgChild(clonedToCell);
+        const fromPieceColor = clonedPiece.alt.split("-")[0];
+
+        const toHasPiece = toPiece !== null && toPiece.alt !== undefined;
+        const toPieceColor = toHasPiece ? toPiece.alt.split("-")[0] : null;
+        if (toHasPiece && toPieceColor === fromPieceColor) return true;
+    }
+
     function isValidMove(piece, fromCell, toCell) {
-        const pieceType = piece.alt.split("-")[1];
-        const pieceColor = piece.alt.split("-")[0];
-        const toPiece = toCell.firstChild;
-        if (toPiece && toPiece.alt.split("-")[0] === pieceColor) return false;
+        const clonedPiece = piece.cloneNode(true);
+        const cloneFromCell = fromCell.cloneNode(true);
+        const clonedToCell = toCell.cloneNode(true);
+        const toPiece = getFirstImgChild(clonedToCell);
+        const fromPieceType = clonedPiece.alt.split("-")[1];
+        const fromPieceColor = clonedPiece.alt.split("-")[0];
+
+        if (isEatingOwnPiece(piece, toCell)) return false;
 
         const fromIndex = Array.from(fromCell.parentNode.children).indexOf(fromCell);
         const toIndex = Array.from(toCell.parentNode.children).indexOf(toCell);
@@ -27,10 +52,10 @@ document.addEventListener("DOMContentLoaded", () => {
         const absRowDiff = Math.abs(rowDiff);
         const absColDiff = Math.abs(colDiff);
 
-        switch (pieceType) {
+        switch (fromPieceType) {
             case "pawn": {
-                const direction = pieceColor === "white" ? -1 : 1;
-                const startRow = pieceColor === "white" ? 6 : 1;
+                const direction = fromPieceColor === "white" ? -1 : 1;
+                const startRow = fromPieceColor === "white" ? 6 : 1;
                 const fromRow = Math.floor(fromIndex / 8);
 
                 if (colDiff === 0) {
@@ -42,7 +67,7 @@ document.addEventListener("DOMContentLoaded", () => {
                 }
                 if (absColDiff === 1 && rowDiff === direction && (toPiece || (enPassantTarget === toCell))) {
                     if (enPassantTarget === toCell && !toPiece) {
-                        const capturedPawnIndex = toIndex + (pieceColor === "white" ? 8 : -8);
+                        const capturedPawnIndex = toIndex + (fromPieceColor === "white" ? 8 : -8);
                         document.querySelectorAll(".item")[capturedPawnIndex].innerHTML = "";
                     }
                     return true;
@@ -55,7 +80,6 @@ document.addEventListener("DOMContentLoaded", () => {
                 break;
             }
             case "horse": {
-                if (toPiece && toPiece.alt.split("-")[0] === pieceColor) return false;
                 if ((absColDiff === 2 && absRowDiff === 1) || (absColDiff === 1 && absRowDiff === 2)) return true;
                 break;
             }
@@ -70,7 +94,6 @@ document.addEventListener("DOMContentLoaded", () => {
                 break;
             }
             case "king": {
-                if (toPiece && toPiece.alt.split("-")[0] === pieceColor) return false;
                 if (absRowDiff <= 1 && absColDiff <= 1) return true;
                 break;
             }
@@ -82,7 +105,7 @@ document.addEventListener("DOMContentLoaded", () => {
         const king = document.querySelector(`img[alt='${color}-king']`).parentElement;
         return Array.from(document.querySelectorAll(".item img"))
             .filter(img => !img.alt.includes(color))
-            .some(enemy => isValidMove(enemy, enemy.parentElement, king));
+            .some(enemy => false /*isValidMove(enemy, enemy.parentElement, king)*/);
     }
 
     function checkmate() {
@@ -97,7 +120,7 @@ document.addEventListener("DOMContentLoaded", () => {
     document.querySelectorAll(".item img").forEach(piece => {
         piece.draggable = true;
         piece.addEventListener("dragstart", (e) => {
-            if ((currentTurn === "white" && piece.alt.includes("white")) || 
+            if ((currentTurn === "white" && piece.alt.includes("white")) ||
                 (currentTurn === "black" && piece.alt.includes("black"))) {
                 selectedPiece = piece;
                 e.dataTransfer.setData("text", "");
