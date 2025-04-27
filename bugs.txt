@@ -1,4 +1,4 @@
-1) El caballo y el rey pueden comer piezas propias
+1) El caballo y el rey pueden comer piezas propias -SOLUCIONADO
 2) Modificar para que sea prácticamente una tabla
 3) Falta el enroque
 4) Bug visual que todas las piezas están "unidas" (al arrastrar una se ve como que arrastro todas)
