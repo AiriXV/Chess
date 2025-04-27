@@ -84,7 +84,15 @@ document.addEventListener("DOMContentLoaded", () => {
                 break;
             }
             case "bishop": {
-                if (absRowDiff === absColDiff && isPathClear(fromIndex, toIndex, (rowDiff > 0 ? 8 : -8) + (colDiff > 0 ? 1 : -1))) return true;
+                if (absRowDiff === absColDiff) {
+                    let step;
+                    if (rowDiff < 0 && colDiff < 0) step = -9; // arriba izquierda
+                    else if (rowDiff < 0 && colDiff > 0) step = -7; // arriba derecha
+                    else if (rowDiff > 0 && colDiff < 0) step = 7; // abajo izquierda
+                    else if (rowDiff > 0 && colDiff > 0) step = 9; // abajo derecha
+            
+                    if (isPathClear(fromIndex, toIndex, step)) return true;
+                }
                 break;
             }
             case "queen": {
