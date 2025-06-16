@@ -10,7 +10,9 @@ document.addEventListener("DOMContentLoaded", () => {
         const cells = document.querySelectorAll(".item");
         let i = fromIndex + step;
         while (i !== toIndex) {
-            if (cells[i].firstChild) return false;
+            if (getFirstImgChild(cells[i])) {
+                return false;
+            }
             i += step;
         }
         return true;
@@ -18,7 +20,6 @@ document.addEventListener("DOMContentLoaded", () => {
 
     function getFirstImgChild(cell) {
         for (let child of cell.children) {
-            console.log(1, child.tagName)
             if (child.tagName.toLowerCase() === "img") {
                 return child;
             }
@@ -94,7 +95,7 @@ document.addEventListener("DOMContentLoaded", () => {
                     else if (rowDiff < 0 && colDiff > 0) step = -7; // arriba derecha
                     else if (rowDiff > 0 && colDiff < 0) step = 7; // abajo izquierda
                     else if (rowDiff > 0 && colDiff > 0) step = 9; // abajo derecha
-            
+
                     if (isPathClear(fromIndex, toIndex, step)) return true;
                 }
                 break;
