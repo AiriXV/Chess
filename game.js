@@ -164,20 +164,46 @@ document.addEventListener("DOMContentLoaded", () => {
                         if (capturedPiece) cell.appendChild(capturedPiece);
                         return;
                     }
-                    // Promoción de peones
+                    // ── Promoción de peón ──
                     const targetRow = Math.floor(Array.from(cell.parentNode.children).indexOf(cell) / 8);
-                    if (selectedPiece.alt.includes("pawn") && (targetRow === 0 || targetRow === 7)) {
-                        let newPiece = "queen";
-                        while (!["queen", "rook", "bishop", "horse"].includes(newPiece)) {
-                            newPiece = prompt("Promoción de peón: elige reina, torre, alfil o caballo").toLowerCase();
-                        }
-                        selectedPiece.alt = `${currentTurn}-${newPiece}`;
-                        selectedPiece.src = `img/${currentTurn}-${newPiece}.png`;
-                    }
-                    currentTurn = currentTurn === "white" ? "black" : "white";
-                    turnDisplay.textContent = `Es turno del: ${currentTurn}`;
-                    checkmate();
+                    if (selectedPiece.alt.includes('pawn') && (targetRow === 0 || targetRow === 7)) {
+                        const modal = document.getElementById('promotion-modal');
+                        const choicesDiv = document.getElementById('promotion-choices');
+                        const pieces = ['queen', 'rook', 'bishop', 'horse'];
+
+                       
+                        choicesDiv.innerHTML = '';
+
+                        // Muestra las opciones de promoción
+                        pieces.forEach(type => {
+                            const img = document.createElement('img');
+                            img.src = `img/${currentTurn}-${type}.png`;
+                            img.alt = type;
+                            img.addEventListener('click', () => {
+                                selectedPiece.alt = `${currentTurn}-${type}`;
+                                selectedPiece.src = img.src;
+                                modal.style.display = 'none';
+                             // ── Continúa el turno luego de promocionar ──
+                            currentTurn = currentTurn === 'white' ? 'black' : 'white';
+                            turnDisplay.textContent = `Es turno del: ${currentTurn}`;
+                            enPassantTarget = null;
+                            if (isKingInCheck(currentTurn)) alert("¡Jaque!");
+                            simpleCheckmate();
+                        });
+                        choicesDiv.appendChild(img);
+                    });
+
+                    modal.style.display = 'flex';
+                    return; // Detener el flujo hasta que el jugador elija la pieza
                 }
+
+                // ── Continuación normal si no hay promoción ──
+                currentTurn = currentTurn === 'white' ? 'black' : 'white';
+                turnDisplay.textContent = `Es turno del: ${currentTurn}`;
+                enPassantTarget = null;
+                if (isKingInCheck(currentTurn)) alert("¡Jaque!");
+                simpleCheckmate();
+                    }
             }
         });
     });
