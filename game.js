@@ -114,6 +114,34 @@ document.addEventListener("DOMContentLoaded", () => {
         return false;
     }
 
+    function hasValidMoves(color) {
+    const pieces = Array.from(document.querySelectorAll(`.item img`))
+        .filter(img => img.alt.includes(color));
+
+    for (let piece of pieces) {
+        const fromCell = piece.parentElement;
+        const cells = Array.from(document.querySelectorAll(".item"));
+        for (let toCell of cells) {
+            if (isValidMove(piece, fromCell, toCell)) {
+                // Simular movimiento
+                const captured = toCell.firstChild;
+                const originalParent = fromCell;
+                toCell.appendChild(piece);
+                if (!isKingInCheck(color)) {
+                    // Revertir simulación
+                    originalParent.appendChild(piece);
+                    if (captured) toCell.appendChild(captured);
+                    return true;
+                }
+                // Revertir simulación
+                originalParent.appendChild(piece);
+                if (captured) toCell.appendChild(captured);
+            }
+        }
+    }
+    return false;
+}
+
      // Verifica si el rey actual está en jaque
     function isKingInCheck(color) {
     const king = document.querySelector(`img[alt='${color}-king']`);
@@ -128,14 +156,13 @@ document.addEventListener("DOMContentLoaded", () => {
     });
 }
 // Verifica si hay jaque mate (un solo rey queda)
-    function checkmate() {
-        const kings = document.querySelectorAll("img[alt*='king']");
-        if (kings.length < 2) {
-            const winner = kings[0].alt.includes("white") ? "Blancas" : "Negras";
-            alert(`${winner} ganan por jaque mate!`);
-            location.reload();
-        }
+function checkmate() {
+    if (!hasValidMoves(currentTurn) && isKingInCheck(currentTurn)) {
+        const winner = currentTurn === "white" ? "Negras" : "Blancas";
+        alert(`${winner} ganan por jaque mate!`);
+        location.reload();
     }
+}
 // Configura el arrastre de piezas
     document.querySelectorAll(".item img").forEach(piece => {
         piece.draggable = true;
