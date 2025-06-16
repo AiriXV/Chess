@@ -143,68 +143,84 @@ document.addEventListener("DOMContentLoaded", () => {
             }
         });
     });
- // Configura el soltar piezas en casillas
-    document.querySelectorAll(".item").forEach(cell => {
-        cell.addEventListener("dragover", (e) => {
-            e.preventDefault();
-        });
+ // Variables temporales para finalizar el turno después de promocionar
+let pendingTurnData = null;
 
-        cell.addEventListener("drop", (e) => {
-            e.preventDefault();
-            if (selectedPiece) {
-                const fromCell = selectedPiece.parentElement;
-                if (cell !== fromCell && isValidMove(selectedPiece, fromCell, cell)) {
-                    const previousParent = selectedPiece.parentElement;
-                    const capturedPiece = cell.firstChild;
-                    cell.innerHTML = "";
-                    cell.appendChild(selectedPiece);
-                    if (isKingInCheck(currentTurn)) {
-                        alert("Movimiento inválido, el rey queda en jaque.");
-                        previousParent.appendChild(selectedPiece);
-                        if (capturedPiece) cell.appendChild(capturedPiece);
-                        return;
-                    }
-                    // ── Promoción de peón ──
-                    const targetRow = Math.floor(Array.from(cell.parentNode.children).indexOf(cell) / 8);
-                    if (selectedPiece.alt.includes('pawn') && (targetRow === 0 || targetRow === 7)) {
-                        const modal = document.getElementById('promotion-modal');
-                        const choicesDiv = document.getElementById('promotion-choices');
-                        const pieces = ['queen', 'rook', 'bishop', 'horse'];
-
-                       
-                        choicesDiv.innerHTML = '';
-
-                        // Muestra las opciones de promoción
-                        pieces.forEach(type => {
-                            const img = document.createElement('img');
-                            img.src = `img/${currentTurn}-${type}.png`;
-                            img.alt = type;
-                            img.addEventListener('click', () => {
-                                selectedPiece.alt = `${currentTurn}-${type}`;
-                                selectedPiece.src = img.src;
-                                modal.style.display = 'none';
-                             // ── Continúa el turno luego de promocionar ──
-                            currentTurn = currentTurn === 'white' ? 'black' : 'white';
-                            turnDisplay.textContent = `Es turno del: ${currentTurn}`;
-                            enPassantTarget = null;
-                            if (isKingInCheck(currentTurn)) alert("¡Jaque!");
-                            simpleCheckmate();
-                        });
-                        choicesDiv.appendChild(img);
-                    });
-
-                    modal.style.display = 'flex';
-                    return; // Detener el flujo hasta que el jugador elija la pieza
-                }
-
-                // ── Continuación normal si no hay promoción ──
-                currentTurn = currentTurn === 'white' ? 'black' : 'white';
-                turnDisplay.textContent = `Es turno del: ${currentTurn}`;
-                enPassantTarget = null;
-                if (isKingInCheck(currentTurn)) alert("¡Jaque!");
-                simpleCheckmate();
-                    }
-            }
-        });
+// Configura el soltar piezas en casillas
+document.querySelectorAll(".item").forEach(cell => {
+    cell.addEventListener("dragover", (e) => {
+        e.preventDefault();
     });
+
+    cell.addEventListener("drop", (e) => {
+        e.preventDefault();
+        if (!selectedPiece) return;
+
+        const fromCell = selectedPiece.parentElement;
+        if (cell === fromCell || !isValidMove(selectedPiece, fromCell, cell)) return;
+
+        const previousParent = selectedPiece.parentElement;
+        const capturedPiece = cell.firstChild;
+        cell.innerHTML = "";
+        cell.appendChild(selectedPiece);
+
+        if (isKingInCheck(currentTurn)) {
+            alert("Movimiento inválido, el rey queda en jaque.");
+            previousParent.appendChild(selectedPiece);
+            if (capturedPiece) cell.appendChild(capturedPiece);
+            return;
+        }
+
+        const targetRow = Math.floor(Array.from(cell.parentNode.children).indexOf(cell) / 8);
+        if (selectedPiece.alt.includes('pawn') && (targetRow === 0 || targetRow === 7)) {
+            // Guardamos los datos necesarios para completar el turno luego de promocionar
+            pendingTurnData = {
+                cell, capturedPiece
+            };
+
+            const modal = document.getElementById('promotion-modal');
+            const choicesDiv = document.getElementById('promotion-choices');
+            const pieces = ['queen', 'rook', 'bishop', 'horse'];
+
+            choicesDiv.innerHTML = '';
+            pieces.forEach(type => {
+                const img = document.createElement('img');
+                img.src = `img/${currentTurn}-${type}.png`;
+                img.alt = type;
+                img.addEventListener('click', () => {
+                    selectedPiece.alt = `${currentTurn}-${type}`;
+                    selectedPiece.src = img.src;
+                    modal.style.display = 'none';
+
+                    // Finaliza el turno tras promocionar
+                    finishTurnAfterPromotion();
+                });
+                choicesDiv.appendChild(img);
+            });
+
+            modal.style.display = 'flex';
+            return;
+        }
+
+        // Si no hay promoción, terminar el turno normalmente
+        endTurn();
+    });
+    function endTurn() {
+            currentTurn = currentTurn === 'white' ? 'black' : 'white';
+            turnDisplay.textContent = `Es turno del: ${currentTurn}`;
+            enPassantTarget = null;
+            if (isKingInCheck(currentTurn)) alert("¡Jaque!");
+            simpleCheckmate();
+        }
+
+        function finishTurnAfterPromotion() {
+            if (!pendingTurnData) return;
+            endTurn();
+            pendingTurnData = null;
+        }
 });
+                    }
+            
+        );
+        
+
