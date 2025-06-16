@@ -1,9 +1,11 @@
 document.addEventListener("DOMContentLoaded", () => {
-    let selectedPiece = null;
-    let currentTurn = "white";
-    let enPassantTarget = null;
-    const turnDisplay = document.querySelector("h2");
+    let selectedPiece = null; // Pieza seleccionada para mover
+    let currentTurn = "white"; // Turno actual (blancas o negras)
+    let enPassantTarget = null; // Casilla objetivo para "en passant"
+    const turnDisplay = document.querySelector("h2"); // Elemento para mostrar el turno
 
+
+      // Verifica que no haya piezas en el camino entre origen y destino
     function isPathClear(fromIndex, toIndex, step) {
         const cells = document.querySelectorAll(".item");
         let i = fromIndex + step;
@@ -34,16 +36,18 @@ document.addEventListener("DOMContentLoaded", () => {
         const toPieceColor = toHasPiece ? toPiece.alt.split("-")[0] : null;
         if (toHasPiece && toPieceColor === fromPieceColor) return true;
     }
+ 
+     // Verifica si el movimiento es válido según la pieza y sus reglas 
 
     function isValidMove(piece, fromCell, toCell) {
         const clonedPiece = piece.cloneNode(true);
         const cloneFromCell = fromCell.cloneNode(true);
         const clonedToCell = toCell.cloneNode(true);
         const toPiece = getFirstImgChild(clonedToCell);
-        const fromPieceType = clonedPiece.alt.split("-")[1];
-        const fromPieceColor = clonedPiece.alt.split("-")[0];
+        const fromPieceType = clonedPiece.alt.split("-")[1]; // tipo de pieza (pawn, rook, etc.)
+        const fromPieceColor = clonedPiece.alt.split("-")[0]; // color de la pieza
 
-        if (isEatingOwnPiece(piece, toCell)) return false;
+        if (isEatingOwnPiece(piece, toCell)) return false; // no capturar propias
 
         const fromIndex = Array.from(fromCell.parentNode.children).indexOf(fromCell);
         const toIndex = Array.from(toCell.parentNode.children).indexOf(toCell);
@@ -109,13 +113,14 @@ document.addEventListener("DOMContentLoaded", () => {
         return false;
     }
 
+     // Verifica si el rey actual está en jaque
     function isKingInCheck(color) {
         const king = document.querySelector(`img[alt='${color}-king']`).parentElement;
         return Array.from(document.querySelectorAll(".item img"))
             .filter(img => !img.alt.includes(color))
             .some(enemy => false /*isValidMove(enemy, enemy.parentElement, king)*/);
     }
-
+// Verifica si hay jaque mate (un solo rey queda)
     function checkmate() {
         const kings = document.querySelectorAll("img[alt*='king']");
         if (kings.length < 2) {
@@ -124,7 +129,7 @@ document.addEventListener("DOMContentLoaded", () => {
             location.reload();
         }
     }
-
+// Configura el arrastre de piezas
     document.querySelectorAll(".item img").forEach(piece => {
         piece.draggable = true;
         piece.addEventListener("dragstart", (e) => {
@@ -137,7 +142,7 @@ document.addEventListener("DOMContentLoaded", () => {
             }
         });
     });
-
+ // Configura el soltar piezas en casillas
     document.querySelectorAll(".item").forEach(cell => {
         cell.addEventListener("dragover", (e) => {
             e.preventDefault();
@@ -158,6 +163,7 @@ document.addEventListener("DOMContentLoaded", () => {
                         if (capturedPiece) cell.appendChild(capturedPiece);
                         return;
                     }
+                    // Promoción de peones
                     const targetRow = Math.floor(Array.from(cell.parentNode.children).indexOf(cell) / 8);
                     if (selectedPiece.alt.includes("pawn") && (targetRow === 0 || targetRow === 7)) {
                         let newPiece = "queen";
