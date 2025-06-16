@@ -116,11 +116,17 @@ document.addEventListener("DOMContentLoaded", () => {
 
      // Verifica si el rey actual está en jaque
     function isKingInCheck(color) {
-        const king = document.querySelector(`img[alt='${color}-king']`).parentElement;
-        return Array.from(document.querySelectorAll(".item img"))
-            .filter(img => !img.alt.includes(color))
-            .some(enemy => false /*isValidMove(enemy, enemy.parentElement, king)*/);
-    }
+    const king = document.querySelector(`img[alt='${color}-king']`);
+    if (!king) return false; // Por si el rey fue capturado (jaque mate)
+
+    const kingCell = king.parentElement;
+    const enemyPieces = Array.from(document.querySelectorAll(".item img"))
+        .filter(img => !img.alt.includes(color));
+
+    return enemyPieces.some(enemy => {
+        return isValidMove(enemy, enemy.parentElement, kingCell);
+    });
+}
 // Verifica si hay jaque mate (un solo rey queda)
     function checkmate() {
         const kings = document.querySelectorAll("img[alt*='king']");
